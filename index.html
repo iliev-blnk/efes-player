@@ -452,12 +452,12 @@
 
 /* ================= EDIT YOUR DATA HERE ================= */
 const TRACKS = [
-  {title:"ANCIENT WORDS",  slot:"OPENING",  file:"Ancient Words - piano instrumental cover.mp3"},
-  {title:"BEN ZAYIFKEN",   slot:"HYMN",     file:"Ben Zay\u0131fken - T\u00fcrk\u00e7e Hristiyan \u0130lahisi.mp3"},
-  {title:"JESUS HEALS",    slot:"WORSHIP",  file:"Jesus Heals _ Instrumental Worship Music _ While You Pray.mp3"},
-  {title:"OCEANS",         slot:"WORSHIP",  file:"Oceans Hillsong United _ Instrumental Worship _ Odir Ruano.mp3"},
-  {title:"PEACE",          slot:"WORSHIP",  file:"PEACE - Soaking worship instrumental _ Prayer and Devotional.mp3"},
-  {title:"Y\u00dcCED\u0130R KRALIMIZ", slot:"CLOSING", file:"Y\u00fccedir Kral\u0131m\u0131z _ Hristiyan \u0130lahi _.mp3"},
+  {title:"ANCIENT WORDS",  slot:"OPENING"},
+  {title:"BEN ZAYIFKEN",   slot:"HYMN"},
+  {title:"JESUS HEALS",    slot:"WORSHIP"},
+  {title:"OCEANS",         slot:"WORSHIP"},
+  {title:"PEACE",          slot:"WORSHIP"},
+  {title:"Y\u00dcCED\u0130R KRALIMIZ", slot:"CLOSING"},
 ];
 
 const PROGRAM = [
@@ -483,9 +483,7 @@ const DEFAULT_TITLE  = document.title;
 const $ = id => document.getElementById(id);
 const audio = $('audio');
 
-const media = TRACKS.map(t => t.file
-  ? {file: {name: t.file}, url: encodeURI(t.file), duration: null}
-  : {file: null, url: null, duration: null});
+const media = TRACKS.map(() => ({file:null, url:null, duration:null}));
 let cur = 0;
 let playing = false;
 let fadeOn = localStorage.getItem('sp_fade') === '1';
@@ -730,7 +728,7 @@ function buildPlaylist(){
     row.innerHTML =
       '<div class="t-num">' + String(i+1).padStart(2,'0') + '</div>' +
       '<div class="t-main"><div class="t-title">' + t.title + '</div>' +
-      '<div class="t-meta">' + (t.file ? 'READY \u2014 CLICK TO PLAY' : 'NO FILE \u2014 CLICK TO LOAD') + '</div></div>' +
+      '<div class="t-meta">NO FILE \u2014 CLICK TO LOAD</div></div>' +
       '<div class="t-slot">' + t.slot + '</div>';
     row.addEventListener('click', () => media[i].url ? playTrack(i) : pickFor(i));
     row.addEventListener('dragenter', () => { dropRow = i; row.classList.add('dragover'); });
@@ -764,7 +762,7 @@ function updateUI(){
     const meta = row.querySelector('.t-meta');
     if (loaded){
       const d = media[i].duration;
-      meta.textContent = (media[i].file ? (TRACKS[i].file ? 'READY' : media[i].file.name) : '') + (d ? ' \u00B7 ' + fmt(d) : '');
+      meta.textContent = (media[i].file ? media[i].file.name : '') + (d ? ' \u00B7 ' + fmt(d) : '');
     } else {
       meta.textContent = 'NO FILE — CLICK TO LOAD';
     }
@@ -800,7 +798,6 @@ buildProgram();
 buildTicker();
 setFade(fadeOn);
 $('volVal').textContent = userVol + '%';
-TRACKS.forEach((t, i) => { if (t.file) probeDuration(i); });
 updateUI();
 </script>
 </body>

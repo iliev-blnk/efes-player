@@ -5,9 +5,9 @@ A single-page brutalist media player for church Sabbath programs, styled exactly
 ## Features
 
 - **Audio Loading**: Multiple ways to load tracks
-  - **Bulk load**: Click "+ LOAD AUDIO FILES" button to select multiple files at once
-  - **Per-track load**: Double-click an unloaded (dimmed) track to load a specific file
-  - **Drag & drop**: Drag audio files anywhere on the page to load them
+  - **Bulk load**: Click "+ LOAD AUDIO FILES" button to select multiple files at once (assigned to tracks in order)
+  - **Per-track load**: Click an unloaded (dimmed) track to load a file for that exact slot
+  - **Drag & drop**: Drop files anywhere to fill empty slots in order, or drop a single file directly onto a track row to assign it there
 
 - **Fade Transitions**: Smooth ~900ms fade when switching tracks (toggle with FADE button or press `F`)
   - Respects your volume slider as the ceiling
@@ -31,6 +31,9 @@ A single-page brutalist media player for church Sabbath programs, styled exactly
 - **Tab Title Indicator**
   - Shows ▶ or ⏸ + current song title in the browser tab
 
+- **OS Media Keys**
+  - Play/pause and prev/next work from your keyboard media keys and lock screen (Media Session API)
+
 - **Offline-Ready**
   - Single self-contained `index.html` file
   - Works completely offline once loaded
@@ -42,8 +45,8 @@ A single-page brutalist media player for church Sabbath programs, styled exactly
 1. Open `index.html` in a web browser
 2. Load audio files:
    - Click "+ LOAD AUDIO FILES" and select up to 8 files in order, OR
-   - Double-click a track to load a single file for that slot, OR
-   - Drag & drop files onto the page
+   - Click a dimmed track to load a single file for that slot, OR
+   - Drag & drop files onto the page (or onto a specific track row)
 3. Click a loaded track to play it (white box = now playing)
 4. Use ▶/⏸ to pause/resume, or press `Space`
 5. Use ⏮/⏭ to skip tracks, or press `←`/`→`
@@ -64,15 +67,15 @@ Change the titles and slots as needed. Keep the same structure. **Tip:** Keep sl
 
 ### Changing the Cover Image
 
-The cover is currently a placeholder. To add your own:
+The vintage Ephesus engraving is embedded directly in the file as base64 (so the app stays a single offline file). To swap it:
 
-1. **Via external URL**: In `index.html`, find `<img id="coverImg"` and change the `src` to your image URL (must be a CORS-friendly source)
+1. **Via external URL**: In `index.html`, find the `<img src="data:image/jpeg;base64,...` inside the `.cover` div and change the `src` to your image URL (must be reachable when offline-less is okay)
 
 2. **Self-contained (no external dependencies)**: 
    - Convert your image to base64:
      - Online tool: https://www.base64-image.de/ (or any image-to-base64 converter)
      - Or use CLI: `base64 -i ephesus.jpg | tr -d '\n'`
-   - Replace the entire `data:image/svg+xml,...` with `data:image/jpeg;base64,<your-base64-here>`
+   - Replace the existing `data:image/jpeg;base64,...` value with `data:image/jpeg;base64,<your-base64-here>`
 
 Example: `src="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEA..."`
 
@@ -102,7 +105,7 @@ Format: `["HH:MM", "ACTIVITY NAME", isMusic]`
 
 ### Technical Notes
 
-- Files are loaded locally via `FileReader` and stored in memory (not uploaded anywhere)
+- Files are loaded locally via `URL.createObjectURL` and stay in memory (not uploaded anywhere)
 - Fade transitions use `requestAnimationFrame` and volume ramping
 - Volume and fade state persist via browser `localStorage`
 - Single `.html` file with embedded styles and scripts

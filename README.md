@@ -39,6 +39,51 @@ A single-page brutalist media player for church Sabbath programs, styled exactly
   - Works completely offline once loaded
   - Works on mobile browsers
 
+
+## Admin Dashboard & Song Library (NEW)
+
+The player now loads its tracklist, program schedule, and songs from a server —
+open the site on **any device** and the songs are already there.
+
+- **Player** (`/`): fetches tracks + program from `/api/data` on load. Tracks with
+  uploaded audio play instantly. Local drag & drop still works as an override.
+- **Admin** (`/admin`): log in to edit song titles/slots, reorder/add/remove tracks,
+  edit the program schedule, and upload songs (max 60MB each). Press **SAVE ALL
+  CHANGES** to publish — the player picks it up on next load.
+- **AUTOPLAY toggle**: next to FADE. OFF = manual play per song (default),
+  ON = auto-advance through the playlist.
+
+### Login
+
+- Username: `admin`
+- Password: `EPHESUS26-SABBATH` (default — **change it**, see below)
+
+### One-time Vercel setup (required)
+
+1. In the Vercel dashboard, open the project → **Storage** → **Create Database** →
+   **Blob** → connect it to this project. This auto-adds the `BLOB_READ_WRITE_TOKEN`
+   env var that uploads and saves need.
+2. (Strongly recommended) Project → **Settings** → **Environment Variables**, add:
+   - `ADMIN_PASSWORD` — your own password (the default above is in the public repo!)
+   - `ADMIN_USER` — optional, defaults to `admin`
+3. Redeploy. Until the Blob store exists, the player just uses the built-in
+   defaults and the admin SAVE shows an error.
+
+### Where files live
+
+- **Songs**: Vercel Blob storage (uploaded via the admin dashboard) — *not* in GitHub.
+- **Cover image**: embedded in `index.html` as base64 — nothing to upload.
+- **Tracklist/program data**: a small JSON blob, rewritten on every admin save.
+
+### API
+
+| Route | Method | Auth | Purpose |
+|---|---|---|---|
+| `/api/data` | GET | public | Current tracks + program |
+| `/api/login` | POST | credentials | Returns a 7-day session token |
+| `/api/admin` | POST | token | Save tracks + program |
+| `/api/upload` | POST | token | Issues client-upload tokens for Vercel Blob |
+
 ## How to Use
 
 ### Basic Playback

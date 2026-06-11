@@ -175,8 +175,9 @@
   button:focus-visible{outline:3px dashed var(--black);outline-offset:3px;}
   .controls .b-skip{flex:1;}
   .controls .b-play{flex:1.6;font-size:17px;}
+  .toggles{display:flex;gap:10px;margin-top:10px;}
   .b-fade{
-    width:100%;margin-top:10px;
+    flex:1;
     background:var(--yellow);color:var(--black);
   }
   .b-fade.on{
@@ -302,6 +303,7 @@
   @keyframes tick{from{transform:translateX(0);}to{transform:translateX(-50%);}}
 
   /* ============ FOOTER ============ */
+  footer a.adminlink{color:inherit;text-decoration:none;border-bottom:2px solid var(--black);}
   footer{
     display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;
     font-size:13px;letter-spacing:2px;
@@ -407,7 +409,10 @@
         <button class="b-play" id="btnPlay" aria-label="Play or pause">▶ PLAY</button>
         <button class="b-skip" id="btnNext" aria-label="Next track">NEXT ⏭</button>
       </div>
-      <button class="b-fade" id="btnFade" aria-pressed="false">FADE: OFF</button>
+      <div class="toggles">
+        <button class="b-fade" id="btnFade" aria-pressed="false">FADE: OFF</button>
+        <button class="b-fade" id="btnAuto" aria-pressed="false">AUTOPLAY: OFF</button>
+      </div>
 
       <div class="volwrap">
         <span class="vollbl">VOL</span>
@@ -416,7 +421,7 @@
       </div>
 
       <button class="b-load" id="btnLoad">+ LOAD AUDIO FILES</button>
-      <div class="loadhint">FILES STAY ON THIS DEVICE — NOTHING IS UPLOADED.<br>DRAG &amp; DROP ANYWHERE, OR CLICK A DIMMED TRACK.</div>
+      <div class="loadhint">SONGS LOAD AUTOMATICALLY FROM THE PROGRAM LIBRARY.<br>YOU CAN STILL DROP LOCAL FILES OR CLICK A DIMMED TRACK.</div>
 
       <div class="keys">
         <span><b>SPACE</b> PLAY/PAUSE</span>
@@ -450,7 +455,7 @@
 
   <footer>
     <span>SABBATH PROGRAM PLAYER</span>
-    <span>05 JUL. EPHESUS'26</span>
+    <span>05 JUL. EPHESUS'26 · <a class="adminlink" href="/admin">ADMIN</a></span>
   </footer>
 </div>
 
@@ -465,7 +470,7 @@
 'use strict';
 
 /* ================= EDIT YOUR DATA HERE ================= */
-const TRACKS = [
+let TRACKS = [
   {title:"ANCIENT WORDS",  slot:"OPENING"},
   {title:"BEN ZAYIFKEN",   slot:"HYMN"},
   {title:"JESUS HEALS",    slot:"WORSHIP"},
@@ -488,7 +493,7 @@ const TRACKS = [
   {title:"TRACK 20", slot:"---"},
 ];
 
-const PROGRAM = [
+let PROGRAM = [
   ["13:00","OPENING",true],
   ["13:10","SABBATH SCHOOL",false],
   ["14:10","BREAK 15 MINUTES",false],
@@ -511,10 +516,11 @@ const DEFAULT_TITLE  = document.title;
 const $ = id => document.getElementById(id);
 const audio = $('audio');
 
-const media = TRACKS.map(() => ({file:null, url:null, duration:null}));
+let media = TRACKS.map(() => ({file:null, url:null, duration:null}));
 let cur = 0;
 let playing = false;
 let fadeOn = localStorage.getItem('sp_fade') === '1';
+let autoOn = localStorage.getItem('sp_auto') === '1';
 let userVol = clampVol(parseInt(localStorage.getItem('sp_vol') ?? '80', 10));
 const PAGE_SIZE = 5;
 let page = 0;
@@ -606,9 +612,9 @@ function skip(dir){
 }
 
 audio.addEventListener('ended', () => {
-  const n = nextLoaded(cur, 1);
-  if (n !== -1) playTrack(n);
-  else { playing = false; updateUI(); flash('PROGRAM COMPLETE ★'); }
+  const n = autoOn ? nextLoaded(cur, 1) : -1;
+  if (n !== -1) { goToTrackPage(n); playTrack(n); }
+  else { playing = false; updateUI(); if (autoOn) flash('PROGRAM COMPLETE ★'); }
 });
 
 audio.addEventListener('timeupdate', () => {
@@ -647,6 +653,16 @@ function setFade(on){
   if (!on){ cancelFades(); audio.volume = userVol / 100; }
 }
 $('btnFade').addEventListener('click', e => { setFade(!fadeOn); e.currentTarget.blur(); });
+
+function setAuto(on){
+  autoOn = on;
+  localStorage.setItem('sp_auto', on ? '1' : '0');
+  const b = $('btnAuto');
+  b.textContent = 'AUTOPLAY: ' + (on ? 'ON' : 'OFF');
+  b.classList.toggle('on', on);
+  b.setAttribute('aria-pressed', on);
+}
+$('btnAuto').addEventListener('click', e => { setAuto(!autoOn); e.currentTarget.blur(); });
 $('btnPrev').addEventListener('click', () => skip(-1));
 $('btnPlay').addEventListener('click', togglePlay);
 $('btnNext').addEventListener('click', () => skip(1));
@@ -757,6 +773,7 @@ function setMediaSession(){
 const rows = [];
 function buildPagination(){
   const wrap = $('pagination');
+  wrap.innerHTML = '';
   const pages = Math.ceil(TRACKS.length / PAGE_SIZE);
   for (let p = 0; p < pages; p++){
     const btn = document.createElement('button');
@@ -784,6 +801,8 @@ function goToTrackPage(i){
 
 function buildPlaylist(){
   const wrap = $('playlist');
+  wrap.innerHTML = '';
+  rows.length = 0;
   TRACKS.forEach((t, i) => {
     const row = document.createElement('div');
     row.className = 'track unloaded';
@@ -804,6 +823,7 @@ function buildPlaylist(){
 
 function buildProgram(){
   const wrap = $('program');
+  wrap.innerHTML = '';
   PROGRAM.forEach(([time, text, music]) => {
     const div = document.createElement('div');
     div.className = 'prog' + (music ? ' music' : '');
@@ -825,7 +845,7 @@ function updateUI(){
     const meta = row.querySelector('.t-meta');
     if (loaded){
       const d = media[i].duration;
-      meta.textContent = (media[i].file ? media[i].file.name : '') + (d ? ' \u00B7 ' + fmt(d) : '');
+      meta.textContent = (media[i].file ? media[i].file.name : (TRACKS[i].filename || 'PROGRAM LIBRARY')) + (d ? ' \u00B7 ' + fmt(d) : '');
     } else {
       meta.textContent = 'NO FILE — CLICK TO LOAD';
     }
@@ -838,7 +858,7 @@ function updateUI(){
   const hasTrack = !!audio.src;
   $('npTitle').textContent = hasTrack ? TRACKS[cur].title : '— SELECT A TRACK —';
   $('npSlot').textContent  = 'FOR: ' + (hasTrack ? TRACKS[cur].slot : '—');
-  $('npFile').textContent  = hasTrack && media[cur].file ? media[cur].file.name : '';
+  $('npFile').textContent  = hasTrack ? (media[cur].file ? media[cur].file.name : (TRACKS[cur].filename || '')) : '';
 
   $('btnPlay').textContent = playing ? '⏸ PAUSE' : '▶ PLAY';
   document.body.classList.toggle('playing', playing);
@@ -857,7 +877,7 @@ playlistEl.addEventListener('touchend', e => {
   }
 }, {passive:true});
 
-/* ---------- toast ---------- 
+/* ---------- toast ---------- */
 let toastTimer;
 function flash(msg){
   const t = $('toast');
@@ -868,13 +888,36 @@ function flash(msg){
 }
 
 /* ---------- init ---------- */
-buildPlaylist();
-buildPagination();
-buildProgram();
-buildTicker();
-setFade(fadeOn);
-$('volVal').textContent = userVol + '%';
-updateUI();
+async function bootstrap(){
+  try {
+    const r = await fetch('/api/data', {cache:'no-store'});
+    if (r.ok){
+      const d = await r.json();
+      if (Array.isArray(d.tracks) && d.tracks.length){
+        TRACKS = d.tracks.map(t => ({
+          title: String(t.title || 'UNTITLED'),
+          slot: String(t.slot || '---'),
+          audioUrl: (typeof t.audioUrl === 'string' && t.audioUrl.startsWith('https://')) ? t.audioUrl : null,
+          filename: String(t.filename || ''),
+        }));
+        media = TRACKS.map(() => ({file:null, url:null, duration:null}));
+      }
+      if (Array.isArray(d.program) && d.program.length) PROGRAM = d.program;
+    }
+  } catch(e) { /* offline or opened as a local file - keep built-in defaults */ }
+  buildPlaylist();
+  buildPagination();
+  buildProgram();
+  buildTicker();
+  setFade(fadeOn);
+  setAuto(autoOn);
+  $('volVal').textContent = userVol + '%';
+  TRACKS.forEach((t, i) => {
+    if (t.audioUrl){ media[i].url = t.audioUrl; probeDuration(i); }
+  });
+  updateUI();
+}
+bootstrap();
 </script>
 </body>
 </html>

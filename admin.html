@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex">
+<title>ADMIN — SABBATH PROGRAM</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' fill='%23000'/%3E%3Ctext x='32' y='44' font-family='monospace' font-size='30' font-weight='bold' text-anchor='middle' fill='%23FFFF00'%3E04%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root{--yellow:#FFFF00;--black:#000000;--white:#FFFFFF;--dark:#1a1a1a;}
+  *{box-sizing:border-box;margin:0;padding:0;}
+  ::selection{background:var(--black);color:var(--yellow);}
+  body{
+    background:var(--dark);
+    background-image:radial-gradient(rgba(255,255,0,.06) 1px, transparent 1px);
+    background-size:24px 24px;
+    font-family:'Space Mono','Courier New',monospace;font-weight:700;
+    color:var(--black);text-transform:uppercase;
+    display:flex;justify-content:center;padding:28px 16px;
+    -webkit-font-smoothing:antialiased;
+  }
+  .card{
+    background:var(--yellow);width:100%;max-width:980px;
+    border-radius:18px;padding:clamp(24px,4vw,48px);
+    box-shadow:0 0 0 4px var(--black);
+    align-self:flex-start;
+  }
+  header{
+    display:flex;align-items:baseline;justify-content:space-between;gap:16px;flex-wrap:wrap;
+    border-bottom:6px solid var(--black);padding-bottom:16px;margin-bottom:28px;
+  }
+  h1{font-size:clamp(20px,3.4vw,34px);letter-spacing:2px;}
+  .backlink{font-size:12px;letter-spacing:1px;color:inherit;text-decoration:none;border-bottom:2px solid var(--black);}
+
+  button{
+    font-family:inherit;font-weight:700;text-transform:uppercase;
+    background:var(--black);color:var(--yellow);
+    border:3px solid var(--black);
+    padding:12px 16px;font-size:14px;cursor:pointer;letter-spacing:1px;
+    transition:background .1s,color .1s;
+  }
+  button:hover{background:var(--white);color:var(--black);}
+  button:active{transform:translate(2px,2px);}
+  button:disabled{opacity:.5;cursor:not-allowed;}
+  button.small{padding:6px 10px;font-size:12px;}
+  button.ghost{background:var(--yellow);color:var(--black);}
+  button.ghost:hover{background:var(--black);color:var(--yellow);}
+
+  input[type=text],input[type=password]{
+    font-family:inherit;font-weight:700;text-transform:uppercase;
+    background:var(--white);border:3px solid var(--black);
+    padding:10px 12px;font-size:14px;letter-spacing:1px;width:100%;
+  }
+  input[type=text]:focus,input[type=password]:focus{outline:3px solid var(--black);outline-offset:2px;}
+  input.lc{text-transform:none;}
+  input[type=checkbox]{width:22px;height:22px;accent-color:var(--black);cursor:pointer;}
+
+  /* login */
+  .login{max-width:420px;margin:40px auto;display:flex;flex-direction:column;gap:14px;}
+  .login label{font-size:12px;letter-spacing:2px;}
+  .err{
+    background:var(--black);color:var(--yellow);
+    padding:10px 14px;font-size:12px;letter-spacing:1px;display:none;
+  }
+  .err.show{display:block;}
+
+  /* sections */
+  .sec{margin-bottom:36px;}
+  .sec-title{
+    display:flex;align-items:baseline;justify-content:space-between;gap:10px;
+    font-size:16px;letter-spacing:3px;
+    border-bottom:5px solid var(--black);padding-bottom:10px;margin-bottom:16px;
+  }
+  .hint{font-size:10px;letter-spacing:1px;opacity:.7;margin-top:8px;}
+
+  /* rows */
+  .row{
+    display:grid;gap:8px;align-items:center;
+    padding:10px;border-bottom:2px solid var(--black);
+    background:transparent;
+  }
+  .row.trackrow{grid-template-columns:34px 1fr 150px auto;}
+  .row.progrow{grid-template-columns:34px 86px 1fr 60px auto;}
+  .rownum{font-size:12px;text-align:center;}
+  .rowbtns{display:flex;gap:6px;}
+  .upbox{display:flex;flex-direction:column;gap:4px;min-width:0;}
+  .upstat{
+    font-size:9px;letter-spacing:.5px;text-transform:none;
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:240px;
+  }
+  .upstat.ok{background:var(--white);border:2px solid var(--black);padding:2px 6px;}
+  .musiclbl{font-size:9px;letter-spacing:1px;text-align:center;}
+
+  .addrow{margin-top:12px;}
+  .savebar{
+    position:sticky;bottom:0;display:flex;gap:12px;align-items:center;
+    background:var(--black);margin:0 -10px;padding:14px;
+  }
+  .savebar button{flex:1;border-color:var(--yellow);}
+  .savebar .status{color:var(--yellow);font-size:11px;letter-spacing:1px;flex:2;}
+
+  .toast{
+    position:fixed;left:50%;bottom:28px;transform:translateX(-50%) translateY(150%);
+    background:var(--black);color:var(--yellow);border:3px solid var(--yellow);
+    padding:12px 22px;font-size:13px;letter-spacing:2px;
+    z-index:1000;transition:transform .25s;max-width:90vw;text-align:center;
+  }
+  .toast.show{transform:translateX(-50%) translateY(0);}
+
+  #dash{display:none;}
+  @media(max-width:760px){
+    .row.trackrow{grid-template-columns:28px 1fr;}
+    .row.trackrow .upbox,.row.trackrow .rowbtns{grid-column:2;}
+    .row.progrow{grid-template-columns:28px 70px 1fr;}
+    .row.progrow .rowbtns,.row.progrow .musicwrap{grid-column:3;}
+  }
+</style>
+</head>
+<body>
+
+<div class="card">
+  <header>
+    <h1>★ ADMIN — SABBATH PROGRAM</h1>
+    <a class="backlink" href="/">← BACK TO PLAYER</a>
+  </header>
+
+  <!-- LOGIN -->
+  <div id="loginView">
+    <form class="login" id="loginForm">
+      <div class="err" id="loginErr"></div>
+      <label>USERNAME</label>
+      <input type="text" id="inUser" class="lc" autocomplete="username" required>
+      <label>PASSWORD</label>
+      <input type="password" id="inPass" class="lc" autocomplete="current-password" required>
+      <button type="submit">LOG IN →</button>
+    </form>
+  </div>
+
+  <!-- DASHBOARD -->
+  <div id="dash">
+
+    <div class="sec">
+      <div class="sec-title">
+        <span>★ TRACKS</span>
+        <button class="small ghost" id="btnLogout">LOG OUT</button>
+      </div>
+      <div id="trackRows"></div>
+      <button class="ghost addrow" id="btnAddTrack">+ ADD TRACK</button>
+      <div class="hint">UPLOAD SENDS THE SONG TO THE PROGRAM LIBRARY (VERCEL BLOB). MAX 60MB PER FILE. REMEMBER TO PRESS SAVE AFTER UPLOADING.</div>
+    </div>
+
+    <div class="sec">
+      <div class="sec-title"><span>★ PROGRAM SCHEDULE</span></div>
+      <div id="progRows"></div>
+      <button class="ghost addrow" id="btnAddProg">+ ADD ROW</button>
+      <div class="hint">MUSIC = WHITE HIGHLIGHT BOX ON THE PLAYER.</div>
+    </div>
+
+    <div class="savebar">
+      <span class="status" id="saveStatus">UNSAVED CHANGES ARE LOST ON RELOAD</span>
+      <button id="btnSave">★ SAVE ALL CHANGES</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script type="module">
+import { upload } from 'https://esm.sh/@vercel/blob@0.27.3/client';
+
+const $ = id => document.getElementById(id);
+let token = localStorage.getItem('sp_admin_token') || '';
+let state = { tracks: [], program: [] };
+
+/* ---------- helpers ---------- */
+let toastTimer;
+function flash(msg){
+  const t = $('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 2600);
+}
+function el(tag, attrs = {}, ...kids){
+  const n = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs)){
+    if (k === 'class') n.className = v;
+    else if (k.startsWith('on')) n.addEventListener(k.slice(2), v);
+    else if (k === 'value') n.value = v;
+    else if (k === 'checked') n.checked = v;
+    else n.setAttribute(k, v);
+  }
+  n.append(...kids);
+  return n;
+}
+
+/* ---------- login ---------- */
+async function showDash(){
+  $('loginView').style.display = 'none';
+  $('dash').style.display = 'block';
+  try {
+    const r = await fetch('/api/data', { cache: 'no-store' });
+    const d = await r.json();
+    state.tracks = (d.tracks || []).map(t => ({
+      title: t.title || '', slot: t.slot || '',
+      audioUrl: t.audioUrl || null, filename: t.filename || '',
+    }));
+    state.program = (d.program || []).map(r => [r[0] || '', r[1] || '', !!r[2]]);
+    if (d._warning) flash('⚠ ' + d._warning);
+  } catch (e) {
+    flash('COULD NOT LOAD DATA');
+  }
+  renderTracks();
+  renderProgram();
+}
+
+$('loginForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  const err = $('loginErr');
+  err.classList.remove('show');
+  try {
+    const r = await fetch('/api/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ user: $('inUser').value.trim(), pass: $('inPass').value }),
+    });
+    const d = await r.json();
+    if (!r.ok) throw new Error(d.error || 'LOGIN FAILED');
+    token = d.token;
+    localStorage.setItem('sp_admin_token', token);
+    showDash();
+  } catch (ex) {
+    err.textContent = ex.message;
+    err.classList.add('show');
+  }
+});
+
+$('btnLogout').addEventListener('click', () => {
+  token = '';
+  localStorage.removeItem('sp_admin_token');
+  location.reload();
+});
+
+/* ---------- tracks ---------- */
+function moveItem(arr, i, dir){
+  const j = i + dir;
+  if (j < 0 || j >= arr.length) return;
+  [arr[i], arr[j]] = [arr[j], arr[i]];
+}
+
+function renderTracks(){
+  const wrap = $('trackRows');
+  wrap.innerHTML = '';
+  state.tracks.forEach((t, i) => {
+    const stat = el('span', { class: 'upstat' + (t.audioUrl ? ' ok' : '') },
+      t.audioUrl ? ('♪ ' + (t.filename || 'uploaded')) : 'no audio');
+    const fileInput = el('input', { type: 'file', accept: 'audio/*', hidden: '' });
+    const upBtn = el('button', { class: 'small', onclick: () => fileInput.click() }, t.audioUrl ? 'REPLACE' : 'UPLOAD');
+    fileInput.addEventListener('change', async () => {
+      const file = fileInput.files[0];
+      if (!file) return;
+      upBtn.disabled = true;
+      try {
+        const blob = await upload(file.name, file, {
+          access: 'public',
+          handleUploadUrl: '/api/upload',
+          clientPayload: token,
+          onUploadProgress: p => { stat.textContent = '↑ ' + Math.round(p.percentage) + '%'; },
+        });
+        t.audioUrl = blob.url;
+        t.filename = file.name;
+        flash('UPLOADED — PRESS SAVE TO PUBLISH');
+      } catch (ex) {
+        flash('UPLOAD FAILED: ' + ex.message);
+      }
+      upBtn.disabled = false;
+      renderTracks();
+    });
+
+    wrap.append(el('div', { class: 'row trackrow' },
+      el('div', { class: 'rownum' }, String(i + 1).padStart(2, '0')),
+      el('div', { style: 'display:flex;flex-direction:column;gap:6px;min-width:0' },
+        el('input', { type: 'text', value: t.title, placeholder: 'SONG TITLE',
+          oninput: e => { t.title = e.target.value; } }),
+        el('input', { type: 'text', value: t.slot, placeholder: 'SLOT (E.G. OPENING)',
+          oninput: e => { t.slot = e.target.value; } }),
+      ),
+      el('div', { class: 'upbox' }, upBtn, stat, fileInput),
+      el('div', { class: 'rowbtns' },
+        el('button', { class: 'small ghost', title: 'Move up', onclick: () => { moveItem(state.tracks, i, -1); renderTracks(); } }, '▲'),
+        el('button', { class: 'small ghost', title: 'Move down', onclick: () => { moveItem(state.tracks, i, 1); renderTracks(); } }, '▼'),
+        el('button', { class: 'small', title: 'Remove', onclick: () => {
+          if (confirm('REMOVE TRACK ' + (i + 1) + ' — ' + (t.title || 'UNTITLED') + '?')){
+            state.tracks.splice(i, 1); renderTracks();
+          }
+        } }, '✕'),
+      ),
+    ));
+  });
+}
+
+$('btnAddTrack').addEventListener('click', () => {
+  state.tracks.push({ title: 'NEW SONG', slot: '---', audioUrl: null, filename: '' });
+  renderTracks();
+});
+
+/* ---------- program ---------- */
+function renderProgram(){
+  const wrap = $('progRows');
+  wrap.innerHTML = '';
+  state.program.forEach((row, i) => {
+    wrap.append(el('div', { class: 'row progrow' },
+      el('div', { class: 'rownum' }, String(i + 1).padStart(2, '0')),
+      el('input', { type: 'text', value: row[0], placeholder: '13:00',
+        oninput: e => { row[0] = e.target.value; } }),
+      el('input', { type: 'text', value: row[1], placeholder: 'ACTIVITY',
+        oninput: e => { row[1] = e.target.value; } }),
+      el('div', { class: 'musicwrap', style: 'display:flex;flex-direction:column;align-items:center;gap:2px' },
+        el('input', { type: 'checkbox', checked: row[2],
+          onchange: e => { row[2] = e.target.checked; } }),
+        el('span', { class: 'musiclbl' }, 'MUSIC'),
+      ),
+      el('div', { class: 'rowbtns' },
+        el('button', { class: 'small ghost', onclick: () => { moveItem(state.program, i, -1); renderProgram(); } }, '▲'),
+        el('button', { class: 'small ghost', onclick: () => { moveItem(state.program, i, 1); renderProgram(); } }, '▼'),
+        el('button', { class: 'small', onclick: () => { state.program.splice(i, 1); renderProgram(); } }, '✕'),
+      ),
+    ));
+  });
+}
+
+$('btnAddProg').addEventListener('click', () => {
+  state.program.push(['00:00', 'NEW ITEM', false]);
+  renderProgram();
+});
+
+/* ---------- save ---------- */
+$('btnSave').addEventListener('click', async () => {
+  const btn = $('btnSave');
+  btn.disabled = true;
+  $('saveStatus').textContent = 'SAVING…';
+  try {
+    const r = await fetch('/api/admin', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token, data: state }),
+    });
+    const d = await r.json();
+    if (!r.ok) throw new Error(d.error || 'SAVE FAILED');
+    $('saveStatus').textContent = 'SAVED ★ LIVE ON THE PLAYER';
+    flash('SAVED ★');
+  } catch (ex) {
+    $('saveStatus').textContent = '⚠ ' + ex.message;
+    flash('⚠ ' + ex.message);
+    if (/UNAUTHORIZED/i.test(ex.message)){
+      localStorage.removeItem('sp_admin_token');
+      setTimeout(() => location.reload(), 1500);
+    }
+  }
+  btn.disabled = false;
+});
+
+/* ---------- init ---------- */
+if (token) showDash();
+</script>
+</body>
+</html>

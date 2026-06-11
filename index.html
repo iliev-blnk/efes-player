@@ -484,7 +484,7 @@ const $ = id => document.getElementById(id);
 const audio = $('audio');
 
 const media = TRACKS.map(t => t.file
-  ? {file: {name: t.file}, url: t.file, duration: null}
+  ? {file: {name: t.file}, url: encodeURI(t.file), duration: null}
   : {file: null, url: null, duration: null});
 let cur = 0;
 let playing = false;

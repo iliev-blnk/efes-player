@@ -54,7 +54,7 @@
   }
   .h-num{
     font-size:clamp(64px,10vw,128px);
-    line-height:.8;
+    line-height:.6;
     letter-spacing:-6px;
   }
   .h-mid{flex:1;min-width:0;}
@@ -335,6 +335,18 @@
   }
   .toast.show{transform:translateX(-50%) translateY(0);}
 
+  /* ============ PAGINATION ============ */
+  .pag-wrap{display:flex;gap:6px;margin-bottom:10px;}
+  .pag-tab{
+    flex:1;font-family:inherit;font-weight:700;text-transform:uppercase;
+    background:var(--black);color:var(--yellow);
+    border:3px solid var(--black);padding:8px 4px;
+    font-size:11px;letter-spacing:1px;cursor:pointer;text-align:center;
+    transition:background .1s,color .1s;
+  }
+  .pag-tab:hover{background:var(--white);color:var(--black);}
+  .pag-tab.active{background:var(--white);color:var(--black);box-shadow:3px 3px 0 var(--black);}
+
   @media(max-width:560px){
     .controls{flex-wrap:wrap;}
     .controls .b-skip{flex:1 1 40%;}
@@ -416,8 +428,9 @@
     <section class="right">
       <div class="sec-title">
         <span>★ PLAYLIST</span>
-        <span class="sec-count" id="loadCount">0/8 LOADED</span>
+        <span class="sec-count" id="loadCount">0/20 LOADED</span>
       </div>
+      <div class="pag-wrap" id="pagination"></div>
       <div class="playlist" id="playlist"></div>
 
       <div class="programwrap">
@@ -488,6 +501,9 @@ let cur = 0;
 let playing = false;
 let fadeOn = localStorage.getItem('sp_fade') === '1';
 let userVol = clampVol(parseInt(localStorage.getItem('sp_vol') ?? '80', 10));
+const PAGE_SIZE = 5;
+let page = 0;
+let touchStartX = 0;
 let fadeToken = 0;
 let fadesActive = 0;
 
@@ -570,6 +586,7 @@ async function togglePlay(){
 function skip(dir){
   const n = nextLoaded(cur, dir);
   if (n === -1){ flash(dir > 0 ? 'END OF PLAYLIST' : 'START OF PLAYLIST'); return; }
+  goToTrackPage(n);
   playTrack(n);
 }
 
@@ -720,11 +737,39 @@ function setMediaSession(){
 
 /* ---------- UI ---------- */
 const rows = [];
+function buildPagination(){
+  const wrap = $('pagination');
+  const pages = Math.ceil(TRACKS.length / PAGE_SIZE);
+  for (let p = 0; p < pages; p++){
+    const btn = document.createElement('button');
+    btn.className = 'pag-tab' + (p === 0 ? ' active' : '');
+    const start = p * PAGE_SIZE + 1;
+    const end = Math.min((p+1) * PAGE_SIZE, TRACKS.length);
+    btn.textContent = start + '\u2013' + end;
+    btn.addEventListener('click', () => goToPage(p));
+    wrap.appendChild(btn);
+  }
+}
+
+function goToPage(p){
+  page = p;
+  document.querySelectorAll('.pag-tab').forEach((b, i) => b.classList.toggle('active', i === p));
+  rows.forEach((row, i) => {
+    row.style.display = Math.floor(i / PAGE_SIZE) === p ? '' : 'none';
+  });
+}
+
+function goToTrackPage(i){
+  const p = Math.floor(i / PAGE_SIZE);
+  if (p !== page) goToPage(p);
+}
+
 function buildPlaylist(){
   const wrap = $('playlist');
   TRACKS.forEach((t, i) => {
     const row = document.createElement('div');
     row.className = 'track unloaded';
+    row.style.display = Math.floor(i / PAGE_SIZE) === 0 ? '' : 'none';
     row.innerHTML =
       '<div class="t-num">' + String(i+1).padStart(2,'0') + '</div>' +
       '<div class="t-main"><div class="t-title">' + t.title + '</div>' +
@@ -782,7 +827,19 @@ function updateUI(){
   document.title = hasTrack ? (playing ? '▶ ' : '⏸ ') + TRACKS[cur].title : DEFAULT_TITLE;
 }
 
-/* ---------- toast ---------- */
+/* ---------- swipe ---------- */
+const playlistEl = $('playlist');
+playlistEl.addEventListener('touchstart', e => { touchStartX = e.changedTouches[0].screenX; }, {passive:true});
+playlistEl.addEventListener('touchend', e => {
+  const dx = e.changedTouches[0].screenX - touchStartX;
+  const pages = Math.ceil(TRACKS.length / PAGE_SIZE);
+  if (Math.abs(dx) > 50){
+    if (dx < 0 && page < pages - 1) goToPage(page + 1);
+    else if (dx > 0 && page > 0) goToPage(page - 1);
+  }
+}, {passive:true});
+
+/* ---------- toast ---------- 
 let toastTimer;
 function flash(msg){
   const t = $('toast');
@@ -794,6 +851,7 @@ function flash(msg){
 
 /* ---------- init ---------- */
 buildPlaylist();
+buildPagination();
 buildProgram();
 buildTicker();
 setFade(fadeOn);

@@ -470,7 +470,21 @@ const TRACKS = [
   {title:"JESUS HEALS",    slot:"WORSHIP"},
   {title:"OCEANS",         slot:"WORSHIP"},
   {title:"PEACE",          slot:"WORSHIP"},
-  {title:"Y\u00dcCED\u0130R KRALIMIZ", slot:"CLOSING"},
+  {title:"YÜCEDİR KRALIMIZ", slot:"CLOSING"},
+  {title:"TRACK 07", slot:"---"},
+  {title:"TRACK 08", slot:"---"},
+  {title:"TRACK 09", slot:"---"},
+  {title:"TRACK 10", slot:"---"},
+  {title:"TRACK 11", slot:"---"},
+  {title:"TRACK 12", slot:"---"},
+  {title:"TRACK 13", slot:"---"},
+  {title:"TRACK 14", slot:"---"},
+  {title:"TRACK 15", slot:"---"},
+  {title:"TRACK 16", slot:"---"},
+  {title:"TRACK 17", slot:"---"},
+  {title:"TRACK 18", slot:"---"},
+  {title:"TRACK 19", slot:"---"},
+  {title:"TRACK 20", slot:"---"},
 ];
 
 const PROGRAM = [
@@ -632,6 +646,9 @@ function setFade(on){
   if (!on){ cancelFades(); audio.volume = userVol / 100; }
 }
 $('btnFade').addEventListener('click', e => { setFade(!fadeOn); e.currentTarget.blur(); });
+$('btnPrev').addEventListener('click', () => skip(-1));
+$('btnPlay').addEventListener('click', togglePlay);
+$('btnNext').addEventListener('click', () => skip(1));
 
 /* ---------- file loading ---------- */
 function assignFile(i, file){

@@ -1,35 +1,50 @@
-import { handleUpload } from '@vercel/blob/client';
+import { put } from '@vercel/blob';
+import busboy from 'busboy';
 import { verifyToken } from './_auth.js';
 
-// Issues short-lived client-upload tokens so the browser uploads audio
-// directly to Vercel Blob (bypasses the 4.5MB serverless body limit).
+// Backend audio upload to Vercel Blob with proper MIME type handling.
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'METHOD NOT ALLOWED' });
+  const token = req.headers['x-admin-token'];
+  if (!verifyToken(token)) return res.status(401).json({ error: 'UNAUTHORIZED' });
+
   try {
-    const jsonResponse = await handleUpload({
-      body: req.body,
-      request: req,
-      onBeforeGenerateToken: async (pathname, clientPayload) => {
-        if (!verifyToken(clientPayload)) throw new Error('UNAUTHORIZED — LOG IN AGAIN');
-        return {
-          allowedContentTypes: [
-            'audio/mpeg', 'audio/mp3', 'audio/mp4', 'audio/x-m4a', 'audio/m4a',
-            'audio/aac', 'audio/wav', 'audio/x-wav', 'audio/ogg', 'audio/flac', 'audio/webm',
-            'application/octet-stream', // fallback: accept any file, assume it's audio
-          ],
-          maximumSizeInBytes: 60 * 1024 * 1024,
-          addRandomSuffix: true,
-        };
-      },
-      onUploadCompleted: async ({ blob }) => {
-        // Re-save with correct audio MIME type if needed
-        if (!blob.contentType?.startsWith('audio/') && !blob.contentType?.includes('octet')) {
-          // Let it through — the browser will request it with Range headers for streaming
-        }
-      },
+    const bb = busboy({ headers: req.headers, limits: { fileSize: 60 * 1024 * 1024 } });
+    let filename = '';
+    let fileBuffer = null;
+    let mimeType = 'audio/mpeg';
+
+    bb.on('file', (fieldname, file, info) => {
+      filename = info.filename;
+      const ext = filename.split('.').pop()?.toLowerCase();
+      const types = {
+        mp3: 'audio/mpeg', m4a: 'audio/mp4', aac: 'audio/aac',
+        wav: 'audio/wav', ogg: 'audio/ogg', flac: 'audio/flac', webm: 'audio/webm',
+      };
+      mimeType = types[ext] || 'audio/mpeg';
+
+      const chunks = [];
+      file.on('data', chunk => chunks.push(chunk));
+      file.on('end', () => { fileBuffer = Buffer.concat(chunks); });
     });
-    return res.status(200).json(jsonResponse);
+
+    bb.on('close', async () => {
+      if (!fileBuffer) return res.status(400).json({ error: 'NO FILE' });
+      if (fileBuffer.length === 0) return res.status(400).json({ error: 'EMPTY FILE' });
+
+      try {
+        const blob = await put(`songs/${Date.now()}-${filename}`, fileBuffer, {
+          access: 'public',
+          contentType: mimeType,
+        });
+        return res.status(200).json({ url: blob.url });
+      } catch (e) {
+        return res.status(500).json({ error: 'BLOB SAVE FAILED: ' + e.message });
+      }
+    });
+
+    req.pipe(bb);
   } catch (e) {
-    return res.status(400).json({ error: e.message });
+    return res.status(500).json({ error: e.message });
   }
 }

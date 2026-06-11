@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="theme-color" content="#FFFF00">
-<title>04 JUL. SABBATH PROGRAM — MUSIC PLAYER</title>
+<title>04 JULY. SABBATH PROGRAM — MUSIC PLAYER</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' fill='%23FFFF00'/%3E%3Ctext x='32' y='44' font-family='monospace' font-size='30' font-weight='bold' text-anchor='middle' fill='%23000'%3E04%3C/text%3E%3C/svg%3E">
 <link rel="manifest" href='data:application/json,{"name":"Sabbath Program Player","short_name":"Sabbath 04","display":"standalone","background_color":"%23222222","theme_color":"%23FFFF00","start_url":"."}'>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -352,14 +352,13 @@
   <header>
     <div class="h-num">04</div>
     <div class="h-mid">
-      <div class="h-jul">JUL.</div>
+      <div class="h-jul">JULY.</div>
       <div class="h-ttl">SABBATH PROGRAM</div>
       <div class="h-sub">★ MUSIC PLAYER ★</div>
     </div>
     <div class="h-right">
       EPHESUS'26<br>
-      13:00 — 17:00<br>
-      DOORS OPEN 12:45
+      13:00 — 17:00
     </div>
   </header>
 
@@ -453,34 +452,26 @@
 
 /* ================= EDIT YOUR DATA HERE ================= */
 const TRACKS = [
-  {title:"AMAZING GRACE",             slot:"OPENING - 13:00"},
-  {title:"BLESSED ASSURANCE",         slot:"HYMN (NO:1) - 15:00"},
-  {title:"AS WE GATHER",              slot:"OFFERINGS - 15:05"},
-  {title:"JESUS LOVES ME",            slot:"CHILDREN STORY - 15:20"},
-  {title:"HOW GREAT THOU ART",        slot:"HYMN (NO:2) - 15:30"},
-  {title:"IT IS WELL",                slot:"HYMN (NO:3) - 16:10"},
-  {title:"GREAT IS THY FAITHFULNESS", slot:"HYMN (NO:4) - 16:30"},
-  {title:"GOD BE WITH YOU",           slot:"CLOSING HYMN - 16:50"},
+  {title:"ANCIENT WORDS",  slot:"OPENING",  file:"Ancient Words - piano instrumental cover.mp3"},
+  {title:"BEN ZAYIFKEN",   slot:"HYMN",     file:"Ben Zay\u0131fken - T\u00fcrk\u00e7e Hristiyan \u0130lahisi.mp3"},
+  {title:"JESUS HEALS",    slot:"WORSHIP",  file:"Jesus Heals _ Instrumental Worship Music _ While You Pray.mp3"},
+  {title:"OCEANS",         slot:"WORSHIP",  file:"Oceans Hillsong United _ Instrumental Worship _ Odir Ruano.mp3"},
+  {title:"PEACE",          slot:"WORSHIP",  file:"PEACE - Soaking worship instrumental _ Prayer and Devotional.mp3"},
+  {title:"Y\u00dcCED\u0130R KRALIMIZ", slot:"CLOSING", file:"Y\u00fccedir Kral\u0131m\u0131z _ Hristiyan \u0130lahi _.mp3"},
 ];
 
 const PROGRAM = [
-  ["13:00","WELCOME - PRAYER - HYMN",false],
-  ["13:15","SABBATH SCHOOL",false],
-  ["14:15","BREAK 15 MINUTES",false],
-  ["14:30","WELCOME - PRAYER - HYMN",false],
-  ["14:45","NAME TAG - INTRODUCE OURSELVES",false],
-  ["15:00","HYMN (NO:1)",true],
-  ["15:05","OFFERINGS",true],
-  ["15:20","CHILDREN STORY",true],
-  ["15:30","HYMN (NO:2)",true],
-  ["15:40","SPEAKER 1 - PAST",false],
-  ["15:50","SPEAKER 2 - PRESENT",false],
-  ["16:00","SPEAKER 3 - FUTURE",false],
-  ["16:10","HYMN (NO:3)",true],
-  ["16:20","GIFTS TIME",false],
-  ["16:30","HYMN (NO:4)",true],
-  ["16:40","PRAYER - THANKS",false],
-  ["16:50","HYMN",true],
+  ["13:00","OPENING",true],
+  ["13:10","SABBATH SCHOOL",false],
+  ["14:10","BREAK 15 MINUTES",false],
+  ["14:25","WELCOME",false],
+  ["14:30","HYMN",true],
+  ["14:45","MESSAGE",false],
+  ["15:30","WORSHIP",true],
+  ["15:45","GIFTS / PRAYER",false],
+  ["16:00","WORSHIP",true],
+  ["16:30","WORSHIP",true],
+  ["16:50","CLOSING",true],
   ["17:00","LUNCH TOGETHER",false],
 ];
 /* ======================================================== */
@@ -492,7 +483,9 @@ const DEFAULT_TITLE  = document.title;
 const $ = id => document.getElementById(id);
 const audio = $('audio');
 
-const media = TRACKS.map(() => ({file:null, url:null, duration:null}));
+const media = TRACKS.map(t => t.file
+  ? {file: {name: t.file}, url: t.file, duration: null}
+  : {file: null, url: null, duration: null});
 let cur = 0;
 let playing = false;
 let fadeOn = localStorage.getItem('sp_fade') === '1';
@@ -737,7 +730,7 @@ function buildPlaylist(){
     row.innerHTML =
       '<div class="t-num">' + String(i+1).padStart(2,'0') + '</div>' +
       '<div class="t-main"><div class="t-title">' + t.title + '</div>' +
-      '<div class="t-meta">NO FILE — CLICK TO LOAD</div></div>' +
+      '<div class="t-meta">' + (t.file ? 'READY \u2014 CLICK TO PLAY' : 'NO FILE \u2014 CLICK TO LOAD') + '</div></div>' +
       '<div class="t-slot">' + t.slot + '</div>';
     row.addEventListener('click', () => media[i].url ? playTrack(i) : pickFor(i));
     row.addEventListener('dragenter', () => { dropRow = i; row.classList.add('dragover'); });
@@ -759,7 +752,7 @@ function buildProgram(){
 }
 
 function buildTicker(){
-  const seg = ' ★ SABBATH PROGRAM ★ 04 JUL ★ EPHESUS’26 ★ 13:00 — 17:00 ★ ALL WELCOME ★ BRING A FRIEND ★ LUNCH TOGETHER 17:00 ' ;
+  const seg = ' ★ SABBATH PROGRAM ★ 04 JULY ★ EPHESUS’26 ★ 13:00 — 17:00 ★ ETERNAL FAITH ★ BRING A FRIEND IN A CHANGING WORLD ★ LUNCH TOGETHER 17:00 ' ;
   $('tickerInner').innerHTML = '<span>' + seg + '</span><span>' + seg + '</span>';
 }
 
@@ -771,7 +764,7 @@ function updateUI(){
     const meta = row.querySelector('.t-meta');
     if (loaded){
       const d = media[i].duration;
-      meta.textContent = (media[i].file ? media[i].file.name : '') + (d ? ' · ' + fmt(d) : '');
+      meta.textContent = (media[i].file ? (TRACKS[i].file ? 'READY' : media[i].file.name) : '') + (d ? ' \u00B7 ' + fmt(d) : '');
     } else {
       meta.textContent = 'NO FILE — CLICK TO LOAD';
     }
@@ -807,6 +800,7 @@ buildProgram();
 buildTicker();
 setFade(fadeOn);
 $('volVal').textContent = userVol + '%';
+TRACKS.forEach((t, i) => { if (t.file) probeDuration(i); });
 updateUI();
 </script>
 </body>

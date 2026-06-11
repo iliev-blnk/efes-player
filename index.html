@@ -464,7 +464,7 @@
 
 <input type="file" id="fileBulk" multiple accept="audio/*" hidden>
 <input type="file" id="fileOne" accept="audio/*" hidden>
-<audio id="audio" preload="metadata"></audio>
+<audio id="audio" preload="metadata" crossorigin="anonymous"></audio>
 
 <script>
 'use strict';
@@ -617,6 +617,15 @@ audio.addEventListener('ended', () => {
   else { playing = false; updateUI(); if (autoOn) flash('PROGRAM COMPLETE ★'); }
 });
 
+audio.addEventListener('error', e => {
+  playing = false;
+  updateUI();
+  const err = audio.error;
+  const msg = err?.message || 'UNKNOWN ERROR';
+  flash('AUDIO ERROR: ' + msg);
+  console.error('audio.error', err?.code, err?.message, audio.src);
+});
+
 audio.addEventListener('timeupdate', () => {
   const pct = audio.duration ? (audio.currentTime / audio.duration) * 100 : 0;
   $('seekFill').style.width = pct + '%';
@@ -677,9 +686,11 @@ function assignFile(i, file){
 }
 function probeDuration(i){
   const a = new Audio();
+  a.crossOrigin = 'anonymous';
   a.preload = 'metadata';
   a.src = media[i].url;
   a.onloadedmetadata = () => { media[i].duration = a.duration; updateUI(); };
+  a.onerror = () => { console.warn('duration probe failed for track', i, media[i].url); };
 }
 function bulkAssign(files){
   const audioFiles = [...files].filter(f => f.type.startsWith('audio/') || /\.(mp3|m4a|wav|ogg|flac|aac)$/i.test(f.name));

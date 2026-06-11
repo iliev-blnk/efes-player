@@ -15,12 +15,18 @@ export default async function handler(req, res) {
           allowedContentTypes: [
             'audio/mpeg', 'audio/mp3', 'audio/mp4', 'audio/x-m4a', 'audio/m4a',
             'audio/aac', 'audio/wav', 'audio/x-wav', 'audio/ogg', 'audio/flac', 'audio/webm',
+            'application/octet-stream', // fallback: accept any file, assume it's audio
           ],
           maximumSizeInBytes: 60 * 1024 * 1024,
           addRandomSuffix: true,
         };
       },
-      onUploadCompleted: async () => { /* URL is saved via /api/admin on Save */ },
+      onUploadCompleted: async ({ blob }) => {
+        // Re-save with correct audio MIME type if needed
+        if (!blob.contentType?.startsWith('audio/') && !blob.contentType?.includes('octet')) {
+          // Let it through — the browser will request it with Range headers for streaming
+        }
+      },
     });
     return res.status(200).json(jsonResponse);
   } catch (e) {

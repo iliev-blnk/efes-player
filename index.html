@@ -898,6 +898,111 @@ function flash(msg){
   toastTimer = setTimeout(() => t.classList.remove('show'), 2200);
 }
 
+/* ---------- phone remote sync (/remote) ---------- */
+let remoteSeq = 0;
+let lastPushedState = '';
+
+function remoteSnapshot(){
+  const hasTrack = !!audio.src;
+  return {
+    title: hasTrack ? TRACKS[cur].title : null,
+    slot: hasTrack ? TRACKS[cur].slot : null,
+    index: hasTrack ? cur : -1,
+    playing,
+    volume: userVol,
+    fade: fadeOn,
+    autoplay: autoOn,
+    position: Math.floor(audio.currentTime || 0),
+    duration: Math.floor(isFinite(audio.duration) ? audio.duration : 0),
+    loaded: media.map(m => !!m.url),
+    tracks: TRACKS.map(t => ({title: t.title, slot: t.slot})),
+  };
+}
+
+function applyRemoteCmd(c){
+  switch (c.action){
+    case 'toggle': togglePlay(); break;
+    case 'prev': skip(-1); break;
+    case 'next': skip(1); break;
+    case 'playTrack': {
+      const i = Number(c.value);
+      if (Number.isInteger(i) && i >= 0 && i < TRACKS.length && media[i].url){ goToTrackPage(i); playTrack(i); }
+      break;
+    }
+    case 'volume': {
+      userVol = clampVol(parseInt(c.value, 10));
+      localStorage.setItem('sp_vol', userVol);
+      volEl.value = userVol;
+      $('volVal').textContent = userVol + '%';
+      if (fadesActive === 0) audio.volume = userVol / 100;
+      break;
+    }
+    case 'seek':
+      if (audio.duration && isFinite(c.value)) audio.currentTime = Math.min(Math.max(Number(c.value), 0), 1) * audio.duration;
+      break;
+    case 'fade': setFade(!!c.value); break;
+    case 'autoplay': setAuto(!!c.value); break;
+  }
+}
+
+function runRemoteCmds(d){
+  if (!d || typeof d.seq !== 'number') return;
+  if (d.reset) remoteSeq = 0;
+  let acted = false;
+  for (const c of d.cmds || []){
+    if (!c || c.id <= remoteSeq) continue;
+    remoteSeq = c.id;
+    applyRemoteCmd(c);
+    acted = true;
+  }
+  remoteSeq = Math.max(remoteSeq, d.seq);
+  if (acted) setTimeout(() => pushRemoteState(true), 400); // let play/skip settle, then report
+}
+
+async function pushRemoteState(force){
+  const s = remoteSnapshot();
+  // quantize position so routine playback only reports every ~5s
+  const key = JSON.stringify({ ...s, position: Math.floor(s.position / 5) });
+  if (!force && key === lastPushedState) return;
+  lastPushedState = key;
+  try {
+    const r = await fetch('/api/remote', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type: 'state', state: s, since: remoteSeq }),
+    });
+    if (r.ok) runRemoteCmds(await r.json());
+  } catch(e){ /* offline — the remote just shows the player as offline */ }
+}
+
+async function remotePollLoop(){
+  for (;;){
+    try {
+      // long-poll: commands arrive near-instantly, and the resolving fetch
+      // wakes this tab even when the browser throttles background timers
+      const r = await fetch('/api/remote?role=player&since=' + remoteSeq + '&wait=25', { cache: 'no-store' });
+      if (!r.ok) throw new Error('poll ' + r.status);
+      runRemoteCmds(await r.json());
+    } catch(e){
+      await new Promise(res => setTimeout(res, 4000));
+    }
+  }
+}
+
+function startRemoteSync(){
+  if (location.protocol === 'file:') return; // offline single-file mode
+  fetch('/api/remote?role=remote', { cache: 'no-store' })
+    .then(r => r.json())
+    .then(d => { remoteSeq = Number(d.seq) || 0; }) // ignore commands from before this session
+    .catch(() => {})
+    .finally(() => {
+      remotePollLoop();
+      pushRemoteState(true);
+      setInterval(() => pushRemoteState(false), 2000);
+      setInterval(() => pushRemoteState(true), 15000); // heartbeat so the remote knows we're alive
+    });
+}
+
 /* ---------- init ---------- */
 async function bootstrap(){
   try {
@@ -927,6 +1032,7 @@ async function bootstrap(){
     if (t.audioUrl){ media[i].url = t.audioUrl; probeDuration(i); }
   });
   updateUI();
+  startRemoteSync();
 }
 bootstrap();
 </script>

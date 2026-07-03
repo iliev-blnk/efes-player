@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#FFFF00">
+<title>REMOTE — SABBATH PROGRAM</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' fill='%23000'/%3E%3Ctext x='32' y='44' font-family='monospace' font-size='30' font-weight='bold' text-anchor='middle' fill='%23FFFF00'%3E%E2%96%B6%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root{--yellow:#FFFF00;--black:#000000;--white:#FFFFFF;--dark:#1a1a1a;}
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+  ::selection{background:var(--black);color:var(--yellow);}
+  body{
+    background:var(--dark);
+    background-image:radial-gradient(rgba(255,255,0,.06) 1px, transparent 1px);
+    background-size:24px 24px;
+    font-family:'Space Mono','Courier New',monospace;font-weight:700;
+    color:var(--black);text-transform:uppercase;
+    display:flex;justify-content:center;padding:16px 12px;
+    -webkit-font-smoothing:antialiased;
+  }
+  .card{
+    background:var(--yellow);width:100%;max-width:560px;
+    border-radius:18px;padding:20px;
+    box-shadow:0 0 0 4px var(--black);
+    align-self:flex-start;
+  }
+  header{
+    display:flex;align-items:baseline;justify-content:space-between;gap:10px;flex-wrap:wrap;
+    border-bottom:6px solid var(--black);padding-bottom:12px;margin-bottom:18px;
+  }
+  h1{font-size:clamp(18px,5vw,26px);letter-spacing:2px;}
+  .backlink{font-size:11px;letter-spacing:1px;color:inherit;text-decoration:none;border-bottom:2px solid var(--black);}
+
+  button{
+    font-family:inherit;font-weight:700;text-transform:uppercase;
+    background:var(--black);color:var(--yellow);
+    border:3px solid var(--black);
+    padding:12px 16px;font-size:14px;cursor:pointer;letter-spacing:1px;
+    transition:background .1s,color .1s;
+  }
+  button:active{transform:translate(2px,2px);}
+  button:disabled{opacity:.5;cursor:not-allowed;}
+  button.ghost{background:var(--yellow);color:var(--black);}
+
+  input[type=text],input[type=password]{
+    font-family:inherit;font-weight:700;text-transform:uppercase;
+    background:var(--white);border:3px solid var(--black);
+    padding:10px 12px;font-size:14px;letter-spacing:1px;width:100%;
+  }
+  input.lc{text-transform:none;}
+
+  .login{max-width:420px;margin:24px auto;display:flex;flex-direction:column;gap:14px;}
+  .login label{font-size:12px;letter-spacing:2px;}
+  .err{
+    background:var(--black);color:var(--yellow);
+    padding:10px 14px;font-size:12px;letter-spacing:1px;display:none;
+  }
+  .err.show{display:block;}
+
+  /* status */
+  .status{
+    display:flex;align-items:center;gap:8px;
+    font-size:11px;letter-spacing:2px;margin-bottom:14px;
+  }
+  .dot{width:12px;height:12px;border:3px solid var(--black);background:var(--white);}
+  .status.online .dot{background:var(--black);}
+
+  /* now playing */
+  .np{
+    background:var(--white);border:3px solid var(--black);
+    box-shadow:6px 6px 0 var(--black);
+    padding:14px;margin-bottom:20px;
+  }
+  .np-label{font-size:10px;letter-spacing:3px;}
+  .np-title{font-size:clamp(18px,5.5vw,24px);margin-top:6px;word-break:break-word;line-height:1.15;}
+  .np-slot{font-size:11px;margin-top:6px;letter-spacing:1px;opacity:.75;}
+  .seek{
+    height:20px;border:3px solid var(--black);background:var(--yellow);
+    margin-top:12px;cursor:pointer;position:relative;
+  }
+  .seek-fill{height:100%;width:0%;background:var(--black);pointer-events:none;}
+  .np-time{font-size:11px;margin-top:6px;letter-spacing:1px;}
+
+  /* transport */
+  .transport{display:grid;grid-template-columns:1fr 1.6fr 1fr;gap:10px;margin-bottom:16px;}
+  .transport button{font-size:20px;padding:18px 8px;}
+
+  /* volume */
+  .volrow{display:flex;align-items:center;gap:12px;margin-bottom:16px;}
+  .volrow .lbl{font-size:12px;letter-spacing:2px;white-space:nowrap;}
+  .volrow input[type=range]{
+    flex:1;appearance:none;-webkit-appearance:none;height:14px;
+    background:var(--black);border:3px solid var(--black);cursor:pointer;
+  }
+  .volrow input[type=range]::-webkit-slider-thumb{
+    appearance:none;-webkit-appearance:none;width:30px;height:30px;
+    background:var(--yellow);border:4px solid var(--black);cursor:pointer;
+  }
+  .volrow input[type=range]::-moz-range-thumb{
+    width:24px;height:24px;border-radius:0;
+    background:var(--yellow);border:4px solid var(--black);cursor:pointer;
+  }
+  .volval{font-size:13px;min-width:48px;text-align:right;}
+
+  /* toggles */
+  .toggles{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:22px;}
+  .toggles button{background:var(--yellow);color:var(--black);font-size:12px;padding:12px 8px;}
+  .toggles button.on{background:var(--black);color:var(--yellow);}
+
+  /* tracklist */
+  .list-title{
+    font-size:13px;letter-spacing:3px;
+    border-bottom:5px solid var(--black);padding-bottom:8px;margin-bottom:8px;
+  }
+  .track{
+    display:flex;align-items:center;gap:10px;
+    padding:11px 8px;border-bottom:2px solid var(--black);cursor:pointer;
+  }
+  .track:active{background:rgba(0,0,0,.08);}
+  .track.unloaded{opacity:.35;cursor:default;}
+  .track.active{background:var(--white);outline:3px solid var(--black);}
+  .t-num{font-size:12px;width:24px;flex:none;}
+  .t-title{font-size:13px;flex:1;min-width:0;word-break:break-word;}
+  .t-slot{font-size:9px;letter-spacing:1px;opacity:.7;flex:none;max-width:35%;text-align:right;}
+
+  .foot{display:flex;justify-content:space-between;align-items:center;margin-top:20px;}
+  .foot button{font-size:11px;padding:8px 12px;}
+  .hint{font-size:9px;letter-spacing:1px;opacity:.6;text-transform:none;}
+
+  .toast{
+    position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(150%);
+    background:var(--black);color:var(--yellow);border:3px solid var(--yellow);
+    padding:12px 22px;font-size:13px;letter-spacing:2px;
+    z-index:1000;transition:transform .25s;max-width:90vw;text-align:center;
+  }
+  .toast.show{transform:translateX(-50%) translateY(0);}
+
+  #remoteView{display:none;}
+</style>
+</head>
+<body>
+
+<div class="card">
+  <header>
+    <h1>★ REMOTE</h1>
+    <a class="backlink" href="/">← PLAYER</a>
+  </header>
+
+  <!-- LOGIN -->
+  <div id="loginView">
+    <form class="login" id="loginForm">
+      <div class="err" id="loginErr"></div>
+      <label>USERNAME</label>
+      <input type="text" id="inUser" class="lc" autocomplete="username" required>
+      <label>PASSWORD</label>
+      <input type="password" id="inPass" class="lc" autocomplete="current-password" required>
+      <button type="submit">LOG IN →</button>
+    </form>
+  </div>
+
+  <!-- REMOTE -->
+  <div id="remoteView">
+    <div class="status" id="status"><span class="dot"></span><span id="statusText">CONNECTING…</span></div>
+
+    <div class="np">
+      <div class="np-label">NOW PLAYING</div>
+      <div class="np-title" id="npTitle">—</div>
+      <div class="np-slot" id="npSlot"></div>
+      <div class="seek" id="seek"><div class="seek-fill" id="seekFill"></div></div>
+      <div class="np-time" id="npTime">00:00 / 00:00</div>
+    </div>
+
+    <div class="transport">
+      <button id="btnPrev" aria-label="Previous track">⏮</button>
+      <button id="btnPlay" aria-label="Play or pause">▶</button>
+      <button id="btnNext" aria-label="Next track">⏭</button>
+    </div>
+
+    <div class="volrow">
+      <span class="lbl">VOL</span>
+      <input type="range" id="vol" min="0" max="100" value="80" aria-label="Volume">
+      <span class="volval" id="volVal">—</span>
+    </div>
+
+    <div class="toggles">
+      <button id="btnFade" aria-pressed="false">FADE: —</button>
+      <button id="btnAuto" aria-pressed="false">AUTOPLAY: —</button>
+    </div>
+
+    <div class="list-title">★ TRACKS — TAP TO PLAY</div>
+    <div id="tracklist"></div>
+
+    <div class="foot">
+      <span class="hint">Controls the player open on the PC.</span>
+      <button class="ghost" id="btnLogout">LOG OUT</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+'use strict';
+const $ = id => document.getElementById(id);
+let token = localStorage.getItem('sp_admin_token') || '';
+
+let state = null;          // last state reported by the player
+let stateAge = Infinity;   // ms since the player last reported (server clocks)
+let stateReceivedAt = 0;   // local timestamp of the last poll
+let pollTimer = null;
+let volTouchedAt = 0;      // suppress slider reconcile while the user drags
+let optimistic = { playing: null, until: 0 };
+
+let toastTimer;
+function flash(msg){
+  const t = $('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 2200);
+}
+function fmt(s){
+  if (!isFinite(s) || s < 0) s = 0;
+  const m = Math.floor(s/60), sec = Math.floor(s%60);
+  return String(m).padStart(2,'0') + ':' + String(sec).padStart(2,'0');
+}
+
+/* ---------- login ---------- */
+function showRemote(){
+  $('loginView').style.display = 'none';
+  $('remoteView').style.display = 'block';
+  poll();
+}
+function logout(){
+  token = '';
+  localStorage.removeItem('sp_admin_token');
+  location.reload();
+}
+$('loginForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  const err = $('loginErr');
+  err.classList.remove('show');
+  try {
+    const r = await fetch('/api/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ user: $('inUser').value.trim(), pass: $('inPass').value }),
+    });
+    const d = await r.json();
+    if (!r.ok) throw new Error(d.error || 'LOGIN FAILED');
+    token = d.token;
+    localStorage.setItem('sp_admin_token', token);
+    showRemote();
+  } catch (ex) {
+    err.textContent = ex.message;
+    err.classList.add('show');
+  }
+});
+$('btnLogout').addEventListener('click', logout);
+
+/* ---------- commands ---------- */
+async function send(action, value){
+  try {
+    const r = await fetch('/api/remote', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type: 'cmd', token, action, value }),
+    });
+    if (r.status === 401){ flash('SESSION EXPIRED'); logout(); return; }
+    if (!r.ok) throw new Error('SEND FAILED');
+    schedulePoll(1200); // pick up the player's reaction quickly
+  } catch (ex) {
+    flash('⚠ COULD NOT REACH SERVER');
+  }
+}
+
+$('btnPrev').addEventListener('click', () => send('prev'));
+$('btnNext').addEventListener('click', () => send('next'));
+$('btnPlay').addEventListener('click', () => {
+  const cur = optimistic.until > Date.now() && optimistic.playing !== null
+    ? optimistic.playing : !!(state && state.playing);
+  optimistic = { playing: !cur, until: Date.now() + 3000 };
+  render();
+  send('toggle');
+});
+$('btnFade').addEventListener('click', () => { if (state) send('fade', !state.fade); });
+$('btnAuto').addEventListener('click', () => { if (state) send('autoplay', !state.autoplay); });
+
+const volEl = $('vol');
+let volSendTimer = null;
+volEl.addEventListener('input', () => {
+  volTouchedAt = Date.now();
+  $('volVal').textContent = volEl.value + '%';
+  clearTimeout(volSendTimer);
+  volSendTimer = setTimeout(() => send('volume', parseInt(volEl.value, 10)), 200);
+});
+
+$('seek').addEventListener('click', e => {
+  if (!state || !state.duration) return;
+  const r = e.currentTarget.getBoundingClientRect();
+  send('seek', Math.min(1, Math.max(0, (e.clientX - r.left) / r.width)));
+});
+
+/* ---------- state polling ---------- */
+function schedulePoll(ms){
+  clearTimeout(pollTimer);
+  pollTimer = setTimeout(poll, ms);
+}
+async function poll(){
+  if (document.hidden){ schedulePoll(2000); return; }
+  try {
+    const r = await fetch('/api/remote?role=remote', { cache: 'no-store' });
+    if (r.ok){
+      const d = await r.json();
+      state = d.state;
+      stateAge = state ? Math.max(0, d.now - state.at) : Infinity;
+      stateReceivedAt = Date.now();
+    }
+  } catch (e) { /* keep last known state */ }
+  render();
+  schedulePoll(2000);
+}
+document.addEventListener('visibilitychange', () => { if (!document.hidden) poll(); });
+
+/* ---------- render ---------- */
+const ONLINE_MS = 40000; // player heartbeats every 15s
+
+function render(){
+  const online = state && (stateAge + (Date.now() - stateReceivedAt)) < ONLINE_MS;
+  $('status').classList.toggle('online', !!online);
+  $('statusText').textContent = online ? 'PLAYER ONLINE'
+    : (state ? 'PLAYER OFFLINE — OPEN IT ON THE PC' : 'WAITING FOR THE PLAYER…');
+
+  if (!state){
+    $('npTitle').textContent = '—';
+    $('npSlot').textContent = '';
+    $('tracklist').innerHTML = '';
+    return;
+  }
+
+  const playing = optimistic.until > Date.now() && optimistic.playing !== null
+    ? optimistic.playing : state.playing;
+
+  $('npTitle').textContent = state.title || '— SELECT A TRACK —';
+  $('npSlot').textContent = state.slot ? 'FOR: ' + state.slot : '';
+  $('btnPlay').textContent = playing ? '⏸' : '▶';
+
+  // advance the position locally between player heartbeats
+  let pos = state.position;
+  if (state.playing) pos += (Date.now() - stateReceivedAt + stateAge) / 1000;
+  if (state.duration) pos = Math.min(pos, state.duration);
+  $('seekFill').style.width = (state.duration ? (pos / state.duration) * 100 : 0) + '%';
+  $('npTime').textContent = fmt(pos) + ' / ' + fmt(state.duration);
+
+  if (Date.now() - volTouchedAt > 3000){
+    volEl.value = state.volume;
+    $('volVal').textContent = state.volume + '%';
+  }
+  $('btnFade').textContent = 'FADE: ' + (state.fade ? 'ON' : 'OFF');
+  $('btnFade').classList.toggle('on', state.fade);
+  $('btnFade').setAttribute('aria-pressed', state.fade);
+  $('btnAuto').textContent = 'AUTOPLAY: ' + (state.autoplay ? 'ON' : 'OFF');
+  $('btnAuto').classList.toggle('on', state.autoplay);
+  $('btnAuto').setAttribute('aria-pressed', state.autoplay);
+
+  renderTracks();
+}
+
+let lastListJson = '';
+function renderTracks(){
+  const tracks = state.tracks || [];
+  const key = JSON.stringify([tracks, state.loaded, state.index]);
+  if (key === lastListJson) return;
+  lastListJson = key;
+
+  const wrap = $('tracklist');
+  wrap.innerHTML = '';
+  tracks.forEach((t, i) => {
+    const loaded = !!(state.loaded && state.loaded[i]);
+    const row = document.createElement('div');
+    row.className = 'track' + (loaded ? '' : ' unloaded') + (i === state.index ? ' active' : '');
+    const num = document.createElement('div');
+    num.className = 't-num';
+    num.textContent = String(i + 1).padStart(2, '0');
+    const title = document.createElement('div');
+    title.className = 't-title';
+    title.textContent = t.title;
+    const slot = document.createElement('div');
+    slot.className = 't-slot';
+    slot.textContent = loaded ? t.slot : 'NO FILE';
+    row.append(num, title, slot);
+    if (loaded) row.addEventListener('click', () => { send('playTrack', i); flash('▶ ' + t.title); });
+    wrap.appendChild(row);
+  });
+}
+
+// tick the progress bar every second while visible
+setInterval(() => { if (!document.hidden && state && state.playing) render(); }, 1000);
+
+/* ---------- init ---------- */
+if (token) showRemote();
+</script>
+</body>
+</html>

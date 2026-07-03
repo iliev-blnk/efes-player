@@ -58,6 +58,23 @@ open the site on **any device** and the songs are already there.
 - Username: `admin`
 - Password: `EPHESUS26-SABBATH` (default — **change it**, see below)
 
+## Phone Remote Control (NEW)
+
+Open **`/remote`** on your phone to control the player running on the PC:
+play/pause, previous/next, tap a track to play it, volume, seek, and the
+FADE / AUTOPLAY toggles. Log in with the same admin credentials.
+
+- Works from anywhere (goes through the server, not your Wi-Fi) — the phone
+  and the PC just both need internet.
+- The PC player picks commands up near-instantly (long-polling), even when
+  its browser tab is in the background.
+- The remote shows PLAYER ONLINE/OFFLINE, what's playing, and live progress.
+- Keep only one player tab open on one PC — two open players would both obey
+  the remote.
+- No extra setup: commands travel through the Vercel Runtime Cache, which is
+  built in. Sending commands requires the admin login; in the very unlikely
+  case the cache drops a command, just tap the button again.
+
 ### One-time Vercel setup (required)
 
 1. In the Vercel dashboard, open the project → **Storage** → **Create Database** →
@@ -83,6 +100,8 @@ open the site on **any device** and the songs are already there.
 | `/api/login` | POST | credentials | Returns a 7-day session token |
 | `/api/admin` | POST | token | Save tracks + program |
 | `/api/upload` | POST | token | Issues client-upload tokens for Vercel Blob |
+| `/api/remote` | GET | public | Player long-polls commands; phone polls player state |
+| `/api/remote` | POST | token for commands | Phone sends commands; player reports its state |
 
 ## How to Use
 

@@ -1,3 +1,6 @@
 {
-  "cleanUrls": true
+  "cleanUrls": true,
+  "functions": {
+    "api/remote.js": { "maxDuration": 60 }
+  }
 }

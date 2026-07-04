@@ -1,50 +1,34 @@
-import { put } from '@vercel/blob';
-import busboy from 'busboy';
+import { handleUpload } from '@vercel/blob/client';
 import { verifyToken } from './_auth.js';
 
-// Backend audio upload to Vercel Blob with proper MIME type handling.
+// Client-side upload token minting. The browser sends the audio file directly
+// to Vercel Blob (bypassing the 4.5 MB serverless request-body limit); this
+// function only authorizes the upload and hands back a short-lived token.
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'METHOD NOT ALLOWED' });
-  const token = req.headers['x-admin-token'];
-  if (!verifyToken(token)) return res.status(401).json({ error: 'UNAUTHORIZED' });
 
   try {
-    const bb = busboy({ headers: req.headers, limits: { fileSize: 60 * 1024 * 1024 } });
-    let filename = '';
-    let fileBuffer = null;
-    let mimeType = 'audio/mpeg';
-
-    bb.on('file', (fieldname, file, info) => {
-      filename = info.filename;
-      const ext = filename.split('.').pop()?.toLowerCase();
-      const types = {
-        mp3: 'audio/mpeg', m4a: 'audio/mp4', aac: 'audio/aac',
-        wav: 'audio/wav', ogg: 'audio/ogg', flac: 'audio/flac', webm: 'audio/webm',
-      };
-      mimeType = types[ext] || 'audio/mpeg';
-
-      const chunks = [];
-      file.on('data', chunk => chunks.push(chunk));
-      file.on('end', () => { fileBuffer = Buffer.concat(chunks); });
+    const jsonResponse = await handleUpload({
+      request: req,
+      body: req.body,
+      onBeforeGenerateToken: async (pathname, clientPayload) => {
+        // clientPayload carries the admin token from the browser.
+        if (!verifyToken(clientPayload)) throw new Error('UNAUTHORIZED');
+        return {
+          allowedContentTypes: [
+            'audio/mpeg', 'audio/mp4', 'audio/aac', 'audio/wav',
+            'audio/ogg', 'audio/flac', 'audio/webm', 'audio/*',
+          ],
+          addRandomSuffix: true,
+          maximumSizeInBytes: 60 * 1024 * 1024,
+        };
+      },
+      onUploadCompleted: async () => {
+        // No-op: the client persists the returned URL via the normal save flow.
+      },
     });
-
-    bb.on('close', async () => {
-      if (!fileBuffer) return res.status(400).json({ error: 'NO FILE' });
-      if (fileBuffer.length === 0) return res.status(400).json({ error: 'EMPTY FILE' });
-
-      try {
-        const blob = await put(`songs/${Date.now()}-${filename}`, fileBuffer, {
-          access: 'public',
-          contentType: mimeType,
-        });
-        return res.status(200).json({ url: blob.url });
-      } catch (e) {
-        return res.status(500).json({ error: 'BLOB SAVE FAILED: ' + e.message });
-      }
-    });
-
-    req.pipe(bb);
+    return res.status(200).json(jsonResponse);
   } catch (e) {
-    return res.status(500).json({ error: e.message });
+    return res.status(400).json({ error: e.message });
   }
 }
